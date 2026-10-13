@@ -962,13 +962,13 @@ class Game:
                 save_best(self.best)
 
     def _kill(self, thing, score, coins, big=False):
-    thing.dead = True
-    if big:                  # only enemies and convoys pass big=True
-        self.kills += 1
-    self.kill_score += score
-    self.player.coins += coins
-    self.explode(thing.x + (getattr(thing, "width", None) or thing.size) / 2,
-                 thing.y + (getattr(thing, "height", None) or thing.size) / 2, big)
+        thing.dead = True
+        if big:                  # only enemies and convoys pass big=True
+            self.kills += 1
+        self.kill_score += score
+        self.player.coins += coins
+        self.explode(thing.x + (getattr(thing, "width", None) or thing.size) / 2,
+                     thing.y + (getattr(thing, "height", None) or thing.size) / 2, big)
 
     def _handle_collisions(self):
         p = self.player
