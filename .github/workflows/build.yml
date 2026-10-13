@@ -1,0 +1,60 @@
+name: Build and release
+on:
+  push:
+    branches: [main]
+    paths: ["tank_wars.py"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag, e.g. 1.0 (leave blank for automatic)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: pip install pyinstaller pygame
+      - run: pyinstaller --windowed --name TankWars tank_wars.py
+      - run: cd dist && zip -ry TankWars-mac-mseries.zip TankWars.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: dist/TankWars-mac-mseries.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: pip install pyinstaller pygame
+      - run: pyinstaller --onefile --windowed --name TankWars tank_wars.py
+      - run: Compress-Archive -Path dist/TankWars.exe -DestinationPath dist/TankWars-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/TankWars-windows.zip
+
+  release:
+    needs: [mac, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: files
+          merge-multiple: true
+      - run: >
+          gh release create "${{ inputs.version || format('1.{0}', github.run_number) }}" files/*
+          --repo "${{ github.repository }}"
+          --title "Tank Wars ${{ inputs.version || format('1.{0}', github.run_number) }}"
+          --notes "Windows and Apple Silicon (M-series) Mac builds. Still in development."
+        env:
+          GH_TOKEN: ${{ github.token }}
